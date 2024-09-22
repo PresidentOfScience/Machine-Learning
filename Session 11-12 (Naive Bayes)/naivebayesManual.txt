@@ -1,0 +1,37 @@
+import numpy as np
+
+class CustomNaiveBayes:
+    def __init__(self):
+        self.class_probabilities = None
+        self.class_means = None
+        self.class_stddevs = None
+
+    def fit(self, X_train, y_train):
+        # Calculate class probabilities
+        self.class_probabilities = {}
+        for class_label in np.unique(y_train):
+            self.class_probabilities[class_label] = np.mean(y_train == class_label)
+
+        # Calculate mean and standard deviation for each feature and class
+        self.class_means = {}
+        self.class_stddevs = {}
+        for class_label in np.unique(y_train):
+            class_indices = np.where(y_train == class_label)[0]
+            self.class_means[class_label] = np.mean(X_train[class_indices], axis=0)
+            self.class_stddevs[class_label] = np.std(X_train[class_indices], axis=0)
+
+    def _pdf(self, x, mean, std):
+        exponent = np.exp(-((x - mean) ** 2) / (2 * (std ** 2)))
+        return (1 / (np.sqrt(2 * np.pi) * std)) * exponent
+
+    def predict(self, X_test):
+        predictions = []
+        for x in X_test:
+            probabilities = {}
+            for class_label in self.class_probabilities:
+                probabilities[class_label] = self.class_probabilities[class_label]
+                for i, (mean, std) in enumerate(zip(self.class_means[class_label], self.class_stddevs[class_label])):
+                    probabilities[class_label] *= self._pdf(x[i], mean, std)
+            predicted_class = max(probabilities, key=probabilities.get)
+            predictions.append(predicted_class)
+        return predictions
